@@ -24,13 +24,15 @@ def insert_tables(cur, conn):
     cur.execute(user_table_insert)
     conn.commit()
 
-    print("Inserting data into songs...")
-    cur.execute(song_table_insert)
-    conn.commit()
 
     print("Inserting data into artists...")
     cur.execute(artist_table_insert)
     conn.commit()
+    
+    print("Inserting data into songs...")
+    cur.execute(song_table_insert)
+    conn.commit()
+
 
     print("Inserting data into time...")
     cur.execute(time_table_insert)
