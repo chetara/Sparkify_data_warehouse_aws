@@ -133,13 +133,19 @@ JSON 'auto'
 
 """
 
-# INSERT INTO FINAL TABLES
 songplay_table_insert = ("""
 INSERT INTO songplays (
-    start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
+    start_time,
+    user_id,
+    level,
+    song_id,
+    artist_id,
+    session_id,
+    location,
+    user_agent
 )
 SELECT DISTINCT
-    TIMESTAMP 'epoch' + se.ts/1000 * INTERVAL '1 second' AS start_time,
+    TIMESTAMP 'epoch' + se.ts/1000 * INTERVAL '1 second',
     se.userId,
     se.level,
     ss.song_id,
@@ -148,17 +154,28 @@ SELECT DISTINCT
     se.location,
     se.userAgent
 FROM staging_events se
-JOIN staging_songs ss
-  ON se.song = ss.title AND se.artist = ss.artist_name AND se.length = ss.duration
+LEFT JOIN staging_songs ss
+  ON se.song ILIKE ss.title
+  AND se.artist ILIKE ss.artist_name
+  AND ABS(se.length - ss.duration) < 1
 WHERE se.page = 'NextSong'
-AND se.userId IS NOT NULL;
+  AND se.userId IS NOT NULL;
 """)
+
+
 
 user_table_insert = ("""
 INSERT INTO users (user_id, first_name, last_name, gender, level)
 SELECT DISTINCT userId, firstName, lastName, gender, level
 FROM staging_events
 WHERE userId IS NOT NULL;
+""")
+
+artist_table_insert = ("""
+INSERT INTO artists (artist_id, name, location, latitude, longitude)
+SELECT DISTINCT artist_id, artist_name, artist_location, artist_latitude, artist_longitude
+FROM staging_songs
+WHERE artist_id IS NOT NULL;
 """)
 
 song_table_insert = ("""
@@ -168,12 +185,7 @@ FROM staging_songs
 WHERE song_id IS NOT NULL;
 """)
 
-artist_table_insert = ("""
-INSERT INTO artists (artist_id, name, location, latitude, longitude)
-SELECT DISTINCT artist_id, artist_name, artist_location, artist_latitude, artist_longitude
-FROM staging_songs
-WHERE artist_id IS NOT NULL;
-""")
+
 
 time_table_insert = ("""
 INSERT INTO time (start_time, hour, day, week, month, year, weekday)
